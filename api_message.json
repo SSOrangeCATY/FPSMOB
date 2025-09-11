@@ -1,0 +1,47 @@
+{
+  "tabData": {
+    "380df991-f603-344c-a090-369bad2a924a": {
+        "owner": "380df991-f603-344c-a090-369bad2a924a",
+        "living": true,
+        "health": 100,
+        "bpAttributeHasHelmet": true,
+        "bpAttributeDurability": 1,
+        "kills": 100,
+        "damage": 1000,
+        "headshotKills": 0,
+        "scores": 4,
+        "assists": 0,
+        "name": "Dev",
+        "mvpCount": 1,
+        "deaths": 10,
+        "money": 999,
+        "team": "ct",
+        "items": {
+          "CARRIED": [
+            "AK47"
+          ],
+          "THROW": [
+            "Incendiary",
+            "Molotov",
+            "手榴弹"
+          ]
+        }
+    }
+  },
+  "canOpenShop": false,
+  "nextRoundMoney": 0,
+  "tWinnerRounds": 0,
+  "isStart": true,
+  "isPause": false,
+  "isWarmTime": false,
+  "shopCloseTime": 0,
+  "dismantleBombProgress": 0,
+  "bombFuse": 0,
+  "isDebug": false,
+  "isError": false,
+  "isWaitingWinner": false,
+  "currentMapSupportShop": true,
+  "cTWinnerRounds": 1,
+  "isWaiting": false,
+  "time": 227
+}

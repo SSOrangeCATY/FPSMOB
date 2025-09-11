@@ -1,0 +1,20 @@
+{
+  "apiConfig": {
+    "apiKey": "test123",
+    "apiUrl": "http://localhost:8080",
+    "refreshInterval": 10
+  },
+  "uiConfig": {
+    "showPlayerCards": true,
+    "showRoundInfo": true,
+    "showTeamScores": true,
+    "showTime": true
+  },
+  "styleConfig": {
+    "customCSS": "body { background: red; }",
+    "fontFamily": "Arial"
+  },
+  "syncConfig": {
+    "syncInterval": 10
+  }
+}
