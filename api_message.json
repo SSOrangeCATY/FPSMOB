@@ -2,20 +2,20 @@
   "tabData": {
     "380df991-f603-344c-a090-369bad2a924a": {
         "owner": "380df991-f603-344c-a090-369bad2a924a",
-        "living": true,
+        "living": false,
         "health": 100,
         "bpAttributeHasHelmet": true,
-        "bpAttributeDurability": 1,
+        "bpAttributeDurability": 50,
         "kills": 100,
-        "damage": 1000,
+        "damage": 100,
         "headshotKills": 0,
         "scores": 4,
         "assists": 0,
         "name": "Dev",
         "mvpCount": 1,
         "deaths": 10,
-        "money": 999,
-        "team": "ct",
+        "money": 1000,
+        "team": "t",
         "items": {
           "CARRIED": [
             "AK47"
@@ -35,13 +35,14 @@
   "isPause": false,
   "isWarmTime": false,
   "shopCloseTime": 0,
-  "dismantleBombProgress": 0,
-  "bombFuse": 0,
+  "dismantleBombProgress": 0.95,
+  "bombFuse": 100,
+  "bombTotalFuse": 100,
   "isDebug": false,
   "isError": false,
   "isWaitingWinner": false,
   "currentMapSupportShop": true,
   "cTWinnerRounds": 1,
   "isWaiting": false,
-  "time": 227
+  "time": 228
 }

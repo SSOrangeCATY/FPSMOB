@@ -1,20 +1,43 @@
 {
-  "apiConfig": {
-    "apiKey": "test123",
-    "apiUrl": "http://localhost:8080",
-    "refreshInterval": 10
-  },
   "uiConfig": {
     "showPlayerCards": true,
     "showRoundInfo": true,
     "showTeamScores": true,
-    "showTime": true
+    "showTime": true,
+    "showAdCard": false,
+    "adCardConfig": {
+      "enabled": false,
+      "text": "",
+      "imageUrl": "",
+      "position": "bottom-right",
+      "duration": 30,
+      "interval": 300
+    }
   },
   "styleConfig": {
-    "customCSS": "body { background: red; }",
+    "cssFile": "default.css",
     "fontFamily": "Arial"
   },
+  "teamConfig": {
+    "ctTeam": {
+      "color": "#2196F3",
+      "icon": "ct_logo.svg",
+      "name": "Faze"
+    },
+    "tTeam": {
+      "color": "#FF9800",
+      "icon": "t_logo.svg",
+      "name": "G2"
+    }
+  },
   "syncConfig": {
-    "syncInterval": 10
+    "syncMode": "active",
+    "syncInterval": 50,
+    "apiUrl": "127.0.0.1:8080/api/data",
+    "apiKey": "",
+    "localFilePath": "",
+    "httpMethod": "GET",
+    "requestParams": {},
+    "localFileInterval": 10
   }
 }

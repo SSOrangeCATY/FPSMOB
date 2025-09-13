@@ -4,7 +4,7 @@
     <header class="page-header">
       <div class="header-content">
         <h1>FPSMOB <span class="subtitle">配置中心</span></h1>
-        <p class="header-desc">定制您的FPS游戏直播数据展示界面</p>
+        <p class="header-desc">可定制FPS游戏直播数据展示界面</p>
         <a href="/live" target="_blank" class="live-link-btn">
           <i class="icon-external-link"></i> 打开Live页面
         </a>
@@ -40,48 +40,20 @@
             
             <div class="card-body">
               <div class="form-group">
-                <label class="form-label" for="apiUrl">API地址</label>
-                <input 
-                  type="text" 
-                  id="apiUrl" 
+                <select 
+                  id="syncMode" 
                   class="form-input" 
-                  v-model="apiConfig.apiUrl"
-                  placeholder="输入API地址，如 http://localhost:8080"
+                  v-model="syncConfig.syncMode"
                 >
+                  <option value="passive">被动同步</option>
+                  <option value="active">主动同步</option>
+                  <option value="local">本地文件</option>
+                </select>
               </div>
               
-              <div class="form-group">
-                <label class="form-label" for="apiKey">API密钥</label>
-                <input 
-                  type="password" 
-                  id="apiKey" 
-                  class="form-input" 
-                  v-model="apiConfig.apiKey"
-                  placeholder="输入API密钥"
-                >
-              </div>
-              
-              <div class="form-group">
-                <label class="form-label" for="refreshInterval">刷新间隔 (秒)</label>
-                <input 
-                  type="number" 
-                  id="refreshInterval" 
-                  class="form-input" 
-                  v-model="apiConfig.refreshInterval"
-                  min="1"
-                  max="60"
-                  placeholder="输入数据刷新间隔"
-                >
-              </div>
-              
-              <div class="divider"></div>
-              
-              <!-- 数据同步设置 -->
-              <h3 class="section-subtitle">数据同步设置</h3>
-              
-              <!-- 被动同步 -->
-              <div class="sync-option">
-                <h4 class="option-title">被动同步</h4>
+              <!-- 被动同步配置 -->
+              <div v-if="syncConfig.syncMode === 'passive'" class="sync-option">
+                <h4 class="option-title">被动同步配置</h4>
                 <p class="option-desc">本地API将接收外部系统的POST请求进行数据同步</p>
                 <div class="sync-info">
                   <p class="sync-endpoint">
@@ -94,27 +66,107 @@
                 </div>
               </div>
               
-              <div class="divider"></div>
-              
-              <!-- 主动同步 -->
-              <div class="sync-option">
-                <h4 class="option-title">主动同步</h4>
+              <!-- 主动同步配置 -->
+              <div v-if="syncConfig.syncMode === 'active'" class="sync-option">
+                <h4 class="option-title">主动同步配置</h4>
                 <p class="option-desc">定时从外部API获取最新数据</p>
+                
                 <div class="form-group">
-                  <label class="form-label" for="syncInterval">同步间隔 (分钟)</label>
+                  <label class="form-label" for="activeApiUrl">API地址</label>
+                  <input 
+                    type="text" 
+                    id="activeApiUrl" 
+                    class="form-input" 
+                    v-model="syncConfig.apiUrl"
+                    placeholder="输入API地址，如 http://localhost:8080"
+                  >
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label" for="activeApiKey">API密钥</label>
+                  <input 
+                    type="password" 
+                    id="activeApiKey" 
+                    class="form-input" 
+                    v-model="syncConfig.apiKey"
+                    placeholder="输入API密钥"
+                  >
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label" for="activeSyncInterval">同步间隔 (毫秒)</label>
                   <input 
                     type="number" 
-                    id="syncInterval" 
+                    id="activeSyncInterval" 
                     class="form-input"
                     v-model="syncConfig.syncInterval"
-                    min="1"
-                    max="60"
+                    min="100"
+                    max="60000"
+                    step="100"
                   >
+                  <p class="field-hint">100-60000毫秒 (0.1-60秒)</p>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="httpMethod">HTTP请求方法</label>
+                  <select 
+                    id="httpMethod" 
+                    class="form-input" 
+                    v-model="syncConfig.httpMethod"
+                  >
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                  </select>
+                </div>
+
+                <!-- 仅在 GET/POST 时显示参数配置 -->
+                <div class="form-group" v-if="syncConfig.httpMethod === 'GET'">
+                  <label class="form-label" for="requestParams">GET 查询参数 (查询字符串或JSON)</label>
+                  <textarea 
+                    id="requestParams" 
+                    class="form-input" 
+                    v-model="requestParamsText"
+                    placeholder='示例: key=value&page=1 或 {"key": "value", "page": 1}'
+                    rows="4"
+                  ></textarea>
+                  <p class="field-hint">支持 a=1&b=2 或 JSON，均会转换为查询参数</p>
+                </div>
+                <div class="form-group" v-if="syncConfig.httpMethod === 'POST'">
+                  <label class="form-label" for="requestParams">POST 请求体 (JSON格式)</label>
+                  <textarea 
+                    id="requestParams" 
+                    class="form-input" 
+                    v-model="requestParamsText"
+                    placeholder='示例: {"key": "value"}'
+                    rows="4"
+                  ></textarea>
+                  <p class="field-hint">作为 JSON 请求体发送</p>
                 </div>
               </div>
               
+              <!-- 本地文件配置 -->
+              <div v-if="syncConfig.syncMode === 'local'" class="sync-option">
+                <h4 class="option-title">本地文件配置</h4>
+                <p class="option-desc">直接从本地JSON文件获取数据</p>
+                
+                <div class="form-group">
+                  <label class="form-label" for="localFilePath">文件路径</label>
+                  <input 
+                    type="text" 
+                    id="localFilePath" 
+                    class="form-input" 
+                    v-model="syncConfig.localFilePath"
+                    placeholder="输入本地JSON文件路径，如 data/match.json"
+                  >
+                </div>
+                
+
+              </div>
+              
+              <div class="divider"></div>
+              
               <div class="form-actions">
-                <button @click="saveApiConfig" class="btn btn-primary">
+                <button @click="saveSyncConfig" class="btn btn-primary">
                   <i class="icon-save"></i> 保存配置
                 </button>
                 <button @click="testApiConnection" class="btn btn-secondary">
@@ -157,6 +209,140 @@
                     <input type="checkbox" v-model="uiConfig.showTime">
                     <span class="toggle-label">显示时间</span>
                   </label>
+                  
+                  <label class="toggle-option">
+                    <input type="checkbox" v-model="uiConfig.showAdCard">
+                    <span class="toggle-label">显示广告卡</span>
+                  </label>
+                </div>
+              </div>
+              
+              <!-- 团队配置 -->
+              <div class="form-group">
+                <h4>CT阵营配置</h4>
+                <div class="form-row">
+                  <div class="form-group-half">
+                    <label class="form-label">队伍名称</label>
+                    <input 
+                      type="text" 
+                      class="form-input"
+                      v-model="uiConfig.teamConfig.ctTeam.name" 
+                      placeholder="输入CT队伍名称"
+                    >
+                  </div>
+                  <div class="form-group-half">
+                    <label class="form-label">图标文件</label>
+                    <input 
+                      type="text" 
+                      class="form-input"
+                      v-model="uiConfig.teamConfig.ctTeam.icon" 
+                      placeholder="输入图标文件名"
+                    >
+                    <p class="field-hint">图标文件应放置在 <code>src/assets/</code> 目录下</p>
+                  </div>
+                  <div class="form-group-half">
+                    <label class="form-label">主题颜色</label>
+                    <input 
+                      type="color" 
+                      class="form-input"
+                      v-model="uiConfig.teamConfig.ctTeam.color"
+                    >
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <h4>T阵营配置</h4>
+                <div class="form-row">
+                  <div class="form-group-half">
+                    <label class="form-label">队伍名称</label>
+                    <input 
+                      type="text" 
+                      class="form-input"
+                      v-model="uiConfig.teamConfig.tTeam.name" 
+                      placeholder="输入T队伍名称"
+                    >
+                  </div>
+                  <div class="form-group-half">
+                    <label class="form-label">图标文件</label>
+                    <input 
+                      type="text" 
+                      class="form-input"
+                      v-model="uiConfig.teamConfig.tTeam.icon" 
+                      placeholder="输入图标文件名"
+                    >
+                    <p class="field-hint">图标文件应放置在 <code>src/assets/</code> 目录下</p>
+                  </div>
+                  <div class="form-group-half">
+                    <label class="form-label">主题颜色</label>
+                    <input 
+                      type="color" 
+                      class="form-input"
+                      v-model="uiConfig.teamConfig.tTeam.color"
+                    >
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 广告卡配置 -->
+              <div class="form-group" v-if="uiConfig.showAdCard">
+                <h4>广告卡配置</h4>
+                <div class="form-row">
+                  <div class="form-group-half">
+                    <label class="form-label">启用广告</label>
+                    <label class="toggle-option">
+                      <input type="checkbox" v-model="uiConfig.adCardConfig.enabled">
+                      <span class="toggle-label">开启/关闭</span>
+                    </label>
+                  </div>
+                  <div class="form-group-full">
+                    <label class="form-label">广告文字</label>
+                    <input 
+                      type="text" 
+                      class="form-input"
+                      v-model="uiConfig.adCardConfig.text" 
+                      placeholder="输入广告文字内容"
+                    >
+                  </div>
+                  <div class="form-group-full">
+                    <label class="form-label">图片URL</label>
+                    <input 
+                      type="text" 
+                      class="form-input"
+                      v-model="uiConfig.adCardConfig.imageUrl" 
+                      placeholder="输入图片URL或上传图片"
+                    >
+                    <p class="field-hint">支持本地文件路径或网络URL</p>
+                  </div>
+                  <div class="form-group-half">
+                    <label class="form-label">显示位置</label>
+                    <select class="form-input" v-model="uiConfig.adCardConfig.position">
+                      <option value="top-left">左上角</option>
+                      <option value="top-right">右上角</option>
+                      <option value="bottom-left">左下角</option>
+                      <option value="bottom-right">右下角</option>
+                    </select>
+                  </div>
+                  <div class="form-group-half">
+                    <label class="form-label">显示时长 (秒)</label>
+                    <input 
+                      type="number" 
+                      class="form-input"
+                      v-model="uiConfig.adCardConfig.duration" 
+                      min="5"
+                      max="300"
+                    >
+                  </div>
+                  <div class="form-group-half">
+                    <label class="form-label">显示间隔 (秒)</label>
+                    <input 
+                      type="number" 
+                      class="form-input"
+                      v-model="uiConfig.adCardConfig.interval" 
+                      min="30"
+                      max="1800"
+                    >
+                  </div>
                 </div>
               </div>
               
@@ -191,7 +377,7 @@
                       v-model="fontSearchQuery"
                       @focus="showFontDropdown = true"
                       @input="showFontDropdown = true"
-                      placeholder="搜索或选择字体..."
+                      :placeholder="getSelectedFontName() || '搜索或选择字体...'"
                     >
                     <div class="font-dropdown" v-if="showFontDropdown">
                       <div 
@@ -199,7 +385,7 @@
                         :key="font.value"
                         class="font-option"
                         :class="{ 'active': styleConfig.fontFamily === font.value }"
-                        @click="selectFont(font.value)"
+                        @click="selectFont(font)"
                       >
                         <span :style="{ fontFamily: font.value }">{{ font.name }}</span>
                         <small>{{ font.preview }}</small>
@@ -216,14 +402,18 @@
               </div>
               
               <div class="form-group">
-                <label class="form-label" for="customCss">自定义CSS</label>
-                <textarea 
-                  id="customCss" 
-                  class="form-input textarea"
-                  v-model="styleConfig.customCss"
-                  rows="6"
-                  placeholder="输入自定义CSS样式"
-                ></textarea>
+                <label class="form-label" for="cssFile">CSS文件</label>
+                <select 
+                  id="cssFile" 
+                  class="form-input"
+                  v-model="styleConfig.cssFile"
+                >
+                  <option value="default.css">默认样式</option>
+                  <option value="custom.css">自定义样式</option>
+                </select>
+                <div v-if="styleConfig.cssFile === 'custom.css'" class="css-file-info">
+                  <p class="info-text">请将自定义CSS文件放置在 <code>css/custom.css</code></p>
+                </div>
               </div>
               
               <div class="form-actions">
@@ -235,7 +425,6 @@
           </div>
         </div>
         
-
 
       </div>
     </main>
@@ -258,7 +447,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import axios from 'axios'
 
 
@@ -266,8 +455,7 @@ import axios from 'axios'
 const categories = ref([
   { id: 'api', name: 'API配置', icon: 'icon-cog' },
   { id: 'ui', name: '界面配置', icon: 'icon-desktop' },
-  { id: 'style', name: '样式配置', icon: 'icon-paint-brush' },
-
+  { id: 'style', name: '样式配置', icon: 'icon-paint-brush' }
 ])
 
 // 当前激活的分类
@@ -278,176 +466,165 @@ function switchCategory(categoryId) {
   activeCategory.value = categoryId
 }
 
-// API配置
-const apiConfig = ref({
-  apiUrl: 'http://localhost:8000',
-  apiKey: '',
-  refreshInterval: 5
-})
-
 // UI配置
 const uiConfig = ref({
   showPlayerCards: true,
   showRoundInfo: true,
   showTeamScores: true,
-  showTime: true
+  showTime: true,
+  showAdCard: false, // 新增：是否显示广告卡
+  
+  // 团队配置迁移到UI配置中
+  teamConfig: {
+    ctTeam: {
+      name: 'CT',
+      icon: 'ct_logo.svg',
+      color: '#2196F3'
+    },
+    tTeam: {
+      name: 'T',
+      icon: 't_logo.svg',
+      color: '#FF9800'
+    }
+  },
+  
+  // 广告卡配置
+  adCardConfig: {
+    enabled: false,
+    text: '赞助商广告',
+    imageUrl: '',
+    position: 'bottom-right', // top-left, top-right, bottom-left, bottom-right
+    duration: 30, // 显示时长（秒）
+    interval: 300 // 显示间隔（秒）
+  }
 })
 
 // 样式配置
 const styleConfig = ref({
   fontFamily: 'Arial, sans-serif',
-  customCss: `/* 默认样式配置 */
-.round-info-card {
-  backdrop-filter: blur(5px);
-  z-index: 1000;
-}
-
-.round-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  gap: 20px;
-}
-
-.player-card {
-  backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
-  min-width: 180px;
-}
-
-.player-card.player-dead {
-  opacity: 0.5;
-  border-color: #666;
-}
-
-.player-cards-container {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  z-index: 999;
-}`
+  cssFile: 'default.css'
 })
 
-// 同步配置
-const syncConfig = ref({
-  syncInterval: 5
-})
-
-// 元素管理配置
-const elementsConfig = ref({
-  customElements: [],
-  enableCustomElements: true
-})
-
-// 字体选择相关变量
+// 字体选择器相关变量
 const fontSearchQuery = ref('')
 const showFontDropdown = ref(false)
-
-// 系统字体列表
-const systemFonts = ref([
-  { name: 'Arial', value: 'Arial, sans-serif', preview: '现代无衬线字体' },
-  { name: 'Helvetica', value: 'Helvetica, Arial, sans-serif', preview: '经典无衬线字体' },
-  { name: 'Times New Roman', value: '"Times New Roman", Times, serif', preview: '经典衬线字体' },
-  { name: 'Georgia', value: 'Georgia, serif', preview: '优雅衬线字体' },
-  { name: 'Courier New', value: '"Courier New", Courier, monospace', preview: '等宽字体' },
-  { name: 'Verdana', value: 'Verdana, sans-serif', preview: '屏幕优化字体' },
-  { name: 'Tahoma', value: 'Tahoma, sans-serif', preview: '紧凑无衬线字体' },
-  { name: 'Trebuchet MS', value: '"Trebuchet MS", sans-serif', preview: '人文无衬线字体' },
-  { name: 'Impact', value: 'Impact, sans-serif', preview: '粗体显示字体' },
-  { name: 'Comic Sans MS', value: '"Comic Sans MS", cursive', preview: '手写风格字体' },
-  { name: '微软雅黑', value: '"Microsoft YaHei", "微软雅黑", sans-serif', preview: 'Windows系统默认中文字体' },
-  { name: '宋体', value: 'SimSun, "宋体", serif', preview: '传统中文衬线字体' },
-  { name: '黑体', value: 'SimHei, "黑体", sans-serif', preview: '中文无衬线字体' },
-  { name: '楷体', value: 'KaiTi, "楷体", serif', preview: '中文楷体字体' },
-  { name: '仿宋', value: 'FangSong, "仿宋", serif', preview: '中文仿宋字体' },
-  { name: '幼圆', value: 'YouYuan, "幼圆", sans-serif', preview: '中文圆体字体' },
-  { name: '华文细黑', value: 'STXihei, "华文细黑", sans-serif', preview: '华文细黑字体' },
-  { name: '华文楷体', value: 'STKaiti, "华文楷体", serif', preview: '华文楷体字体' },
-  { name: '华文宋体', value: 'STSong, "华文宋体", serif', preview: '华文宋体字体' },
-  { name: '华文仿宋', value: 'STFangsong, "华文仿宋", serif', preview: '华文仿宋字体' },
-  { name: '苹方', value: '"PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif', preview: '苹果系统默认中文字体' },
-  { name: '冬青黑体', value: '"Hiragino Sans GB", "冬青黑体", sans-serif', preview: '苹果系统黑体字体' },
-  { name: '思源黑体', value: '"Source Han Sans CN", "思源黑体", sans-serif', preview: 'Adobe开源黑体字体' },
-  { name: '思源宋体', value: '"Source Han Serif CN", "思源宋体", serif', preview: 'Adobe开源宋体字体' }
-])
+const fonts = ref([])
 
 // 过滤后的字体列表
 const filteredFonts = computed(() => {
-  if (!fontSearchQuery.value) return systemFonts.value
-  const query = fontSearchQuery.value.toLowerCase()
-  return systemFonts.value.filter(font => 
-    font.name.toLowerCase().includes(query) || 
-    font.preview.toLowerCase().includes(query)
+  if (!fontSearchQuery.value) {
+    return fonts.value
+  }
+  return fonts.value.filter(font => 
+    font.name.toLowerCase().includes(fontSearchQuery.value.toLowerCase()) ||
+    font.preview.toLowerCase().includes(fontSearchQuery.value.toLowerCase())
   )
 })
 
-// 选择字体的方法
-function selectFont(fontValue) {
-  styleConfig.value.fontFamily = fontValue
-  showFontDropdown.value = false
-  fontSearchQuery.value = ''
-}
-
-// 点击外部关闭下拉菜单
-function closeFontDropdown() {
-  showFontDropdown.value = false
-}
-
 // 本地同步端点
 const localSyncEndpoint = computed(() => {
-  const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80')
-  return `${window.location.protocol}//${window.location.hostname}:${port}/api/data`
+  return `${window.location.origin}/api/sync`
 })
 
-// 通知状态
+// 通知配置
 const notification = ref({
   show: false,
+  type: 'info',
   message: '',
-  type: 'success',
-  icon: 'icon-check'
+  icon: ''
 })
 
 // 显示通知
-function showNotification(message, type = 'success', icon = 'icon-check') {
+function showNotification(message, type = 'info', icon = 'icon-info') {
   notification.value = {
     show: true,
-    message,
     type,
+    message,
     icon
   }
   
+  // 3秒后自动隐藏通知
   setTimeout(() => {
     notification.value.show = false
   }, 3000)
 }
 
-// 从后端获取配置
-async function loadConfigs() {
+// 同步配置
+const syncConfig = ref({
+  syncMode: 'active', // 'passive', 'active', or 'local'
+  syncInterval: 5000,
+  apiUrl: '',
+  apiKey: '',
+  localFilePath: '',
+  httpMethod: 'GET',
+  requestParams: {}
+})
+
+// 请求参数文本（用于文本编辑）
+const requestParamsText = ref('')
+
+// 监听请求参数变化，同步到syncConfig
+watch(requestParamsText, (newValue) => {
   try {
-    const response = await axios.get('/api/config')
-    const configs = response.data
-    if (configs.apiConfig) apiConfig.value = configs.apiConfig
-    if (configs.uiConfig) uiConfig.value = configs.uiConfig
-    if (configs.styleConfig) styleConfig.value = configs.styleConfig
-    if (configs.syncConfig) syncConfig.value = configs.syncConfig
+    if (newValue.trim()) {
+      if (syncConfig.value.httpMethod === 'GET' && newValue.includes('=')) {
+        // 解析查询字符串为对象
+        const params = {}
+        newValue.split('&').forEach(part => {
+          const [k, v] = part.split('=')
+          if (k) params[decodeURIComponent(k.trim())] = v ? decodeURIComponent(v.trim()) : ''
+        })
+        syncConfig.value.requestParams = params
+      } else {
+        syncConfig.value.requestParams = JSON.parse(newValue)
+      }
+    } else {
+      syncConfig.value.requestParams = {}
+    }
   } catch (error) {
-    console.error('加载配置失败:', error)
-    showNotification('加载配置失败，使用默认配置', 'error', 'icon-times')
+    // JSON解析错误时保持原值
+    console.warn('JSON解析错误:', error)
   }
+})
+
+// 监听syncConfig.requestParams变化，同步到文本
+watch(() => syncConfig.value.requestParams, (newValue) => {
+  try {
+    requestParamsText.value = JSON.stringify(newValue, null, 2)
+  } catch (error) {
+    requestParamsText.value = '{}'
+  }
+}, { immediate: true })
+
+
+function saveUiConfig() {
+  const configData = {
+    uiConfig: {
+      showPlayerCards: uiConfig.value.showPlayerCards,
+      showRoundInfo: uiConfig.value.showRoundInfo,
+      showTeamScores: uiConfig.value.showTeamScores,
+      showTime: uiConfig.value.showTime,
+      showAdCard: uiConfig.value.showAdCard,
+      teamConfig: uiConfig.value.teamConfig,
+      adCardConfig: uiConfig.value.adCardConfig
+    }
+  }
+  
+  // 保存配置到后端
+  saveConfigToBackend(configData)
+}
+
+function saveSyncConfig() {
+  const configData = {
+    syncConfig: syncConfig.value,
+  }
+  
+  // 保存配置到后端
+  saveConfigToBackend(configData)
 }
 
 // 保存配置到后端
-async function saveConfigToBackend() {
-  const configs = {
-    apiConfig: apiConfig.value,
-    uiConfig: uiConfig.value,
-    styleConfig: styleConfig.value,
-    syncConfig: syncConfig.value
-  };
-  
+async function saveConfigToBackend(configs) {
   try {
     await axios.post('/api/config', configs)
     showNotification('配置保存成功', 'success', 'icon-check')
@@ -457,33 +634,22 @@ async function saveConfigToBackend() {
   }
 }
 
-// 保存API配置
-function saveApiConfig() {
-  saveConfigToBackend()
-}
-
-// 保存UI配置
-function saveUiConfig() {
-  saveConfigToBackend()
-}
-
 // 保存样式配置
 function saveStyleConfig() {
   saveConfigToBackend()
 }
 
 
-
 // 测试API连接
 function testApiConnection() {
-  if (!apiConfig.value.apiUrl) {
+  if (!syncConfig.value.apiUrl) {
     showNotification('请输入API地址', 'error', 'icon-times')
     return
   }
   
   axios.post('/api/config/test-connection', {
-    apiUrl: apiConfig.value.apiUrl,
-    apiKey: apiConfig.value.apiKey
+    apiUrl: syncConfig.value.apiUrl,
+    apiKey: syncConfig.value.apiKey
   })
     .then(response => {
       showNotification('API连接成功', 'success', 'icon-check')
@@ -504,10 +670,88 @@ function copyEndpoint() {
     })
 }
 
+// 从后端获取配置
+async function loadConfigs() {
+  try {
+    const response = await axios.get('/api/config')
+    const configs = response.data
+    if (configs.uiConfig) {
+      uiConfig.value = { ...uiConfig.value, ...configs.uiConfig }
+      // 确保团队配置存在
+      if (!uiConfig.value.teamConfig) {
+        uiConfig.value.teamConfig = {
+          ctTeam: { name: 'CT', icon: 'ct_logo.svg', color: '#2196F3' },
+          tTeam: { name: 'T', icon: 't_logo.svg', color: '#FF9800' }
+        }
+      }
+      // 确保广告卡配置存在
+      if (!uiConfig.value.adCardConfig) {
+        uiConfig.value.adCardConfig = {
+          enabled: false,
+          text: '赞助商广告',
+          imageUrl: '',
+          position: 'bottom-right',
+          duration: 30,
+          interval: 300
+        }
+      }
+    }
+    if (configs.styleConfig) styleConfig.value = configs.styleConfig
+    if (configs.syncConfig) {
+      syncConfig.value = { ...syncConfig.value, ...configs.syncConfig }
+    }
+  } catch (error) {
+    console.error('加载配置失败:', error)
+    showNotification('加载配置失败，使用默认配置', 'error', 'icon-times')
+  }
+}
+
+// 加载字体配置
+async function loadFonts() {
+  try {
+    const response = await axios.get('/api/fonts')
+    fonts.value = response.data
+    console.log('系统字体加载完成，共', fonts.value.length, '种字体')
+  } catch (error) {
+    console.error('加载系统字体失败:', error)
+    showNotification('加载系统字体失败，使用默认字体列表', 'warning', 'icon-warning')
+    // 出错时使用默认字体列表作为后备
+    fonts.value = [
+      { value: 'Arial, sans-serif', name: 'Arial', preview: '系统字体' },
+      { value: 'Times New Roman, serif', name: 'Times New Roman', preview: '系统字体' },
+      { value: 'Courier New, monospace', name: 'Courier New', preview: '系统字体' },
+      { value: 'Georgia, serif', name: 'Georgia', preview: '系统字体' },
+      { value: 'Verdana, sans-serif', name: 'Verdana', preview: '系统字体' },
+      { value: 'Tahoma, sans-serif', name: 'Tahoma', preview: '系统字体' },
+      { value: 'Trebuchet MS, sans-serif', name: 'Trebuchet MS', preview: '系统字体' },
+      { value: 'Impact, sans-serif', name: 'Impact', preview: '系统字体' },
+      { value: 'Comic Sans MS, cursive', name: 'Comic Sans MS', preview: '系统字体' }
+    ]
+  }
+}
+
+// 关闭字体下拉菜单
+function closeFontDropdown() {
+  showFontDropdown.value = false
+}
+
+// 选择字体
+function selectFont(font) {
+  styleConfig.value.fontFamily = font.value
+  closeFontDropdown()
+}
+
+// 获取选中的字体名称
+function getSelectedFontName() {
+  const selectedFont = fonts.value.find(font => font.value === styleConfig.value.fontFamily)
+  return selectedFont ? selectedFont.name : null
+}
 
 
-// 初始化加载配置
+
+// 初始化加载配置和字体
 loadConfigs()
+loadFonts()
 
 // 添加全局点击事件监听，用于关闭字体下拉菜单
 onMounted(() => {
@@ -654,7 +898,9 @@ onUnmounted(() => {
 .tab.active {
   background: var(--primary);
   color: var(--white);
-  border-color: var(--primary);
+  border-color: transparent;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 /* 配置内容区样式 */
@@ -664,6 +910,25 @@ onUnmounted(() => {
   padding: 20px;
   max-height: 600px;
   overflow-y: auto;
+}
+
+/* 统一滚动条样式 */
+.config-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.config-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.config-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.config-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* 分类内容样式 */
@@ -917,7 +1182,7 @@ onUnmounted(() => {
   top: 100%;
   left: 0;
   right: 0;
-  max-height: 300px;
+  max-height: 200px;
   overflow-y: auto;
   background: rgba(0, 0, 0, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -925,6 +1190,7 @@ onUnmounted(() => {
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
+  margin-top: 5px;
 }
 
 .font-option {
@@ -950,9 +1216,6 @@ onUnmounted(() => {
   border-left: 3px solid var(--primary);
 }
 
-.font-option span {
-  font-weight: 500;
-}
 
 .font-option small {
   color: var(--gray);
@@ -1074,4 +1337,107 @@ onUnmounted(() => {
   background: rgba(52, 152, 219, 0.8);
   color: var(--white);
 }
+
+/* 下拉选择框样式 */
+select.form-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2395A5A6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  color: var(--white);
+}
+
+select.form-input:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23FF4500' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+}
+
+/* 颜色选择器样式 */
+input[type="color"].form-input {
+  height: 44px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+input[type="color"].form-input::-webkit-color-swatch {
+  border: none;
+  border-radius: calc(var(--border-radius) - 2px);
+}
+
+input[type="color"].form-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+/* 同步选项动画 */
+.sync-option {
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 同步模式标签样式 */
+.sync-mode-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--white);
+}
+
+/* 同步选项标题样式 */
+.sync-option .option-title {
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+/* 同步选项描述样式 */
+.sync-option .option-desc {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border-left: 3px solid var(--primary);
+}
+
+/* CSS文件信息样式 */
+.css-file-info {
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius);
+  border-left: 3px solid var(--info);
+}
+
+.info-text {
+  margin: 0;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.info-text code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
 </style>

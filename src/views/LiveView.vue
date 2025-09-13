@@ -15,19 +15,28 @@ const configs = ref({
     showPlayerCards: true,
     showRoundInfo: true,
     showTeamScores: true,
-    showTime: true
+    showTime: true,
+    showAdCard: false,
+    adCardConfig: {
+      enabled: false,
+      text: '',
+      imageUrl: '',
+      position: 'bottom-right',
+      duration: 30,
+      interval: 300
+    }
   },
   styleConfig: {
     fontFamily: 'Arial, sans-serif',
-    customCSS: ''
-  },
-  apiConfig: {
-    apiUrl: 'http://localhost:8000',
-    apiKey: '',
-    refreshInterval: 5
+    cssFile: 'default.css'
   },
   syncConfig: {
-    syncInterval: 5
+    syncMode: 'active',
+    syncInterval: 5000,
+    apiUrl: 'http://localhost:8080',
+    apiKey: '',
+    localFilePath: '',
+    localFileInterval: 10
   }
 })
 
@@ -56,33 +65,25 @@ async function loadConfigs() {
 
 // 应用自定义CSS
 function applyCustomCSS() {
-  if (configs.value.styleConfig.customCSS) {
-    // 移除旧的自定义样式
-    const oldStyle = document.getElementById('fpsmob-custom-css')
-    if (oldStyle) {
-      oldStyle.remove()
-    }
-    
-    // 添加新的自定义样式
-    const style = document.createElement('style')
-    style.id = 'fpsmob-custom-css'
-    style.textContent = configs.value.styleConfig.customCSS
-    document.head.appendChild(style)
+  // 移除旧的自定义样式
+  const oldStyle = document.getElementById('fpsmob-custom-css')
+  if (oldStyle) {
+    oldStyle.remove()
   }
-}
-
-// 定期刷新配置
-function startConfigRefresh() {
-  // 每30秒刷新一次配置
-  setInterval(() => {
-    loadConfigs()
-  }, 30000)
+  
+  // 加载外部CSS文件
+  if (configs.value.styleConfig.cssFile) {
+    const link = document.createElement('link')
+    link.id = 'fpsmob-custom-css'
+    link.rel = 'stylesheet'
+    link.href = `/css/${configs.value.styleConfig.cssFile}`
+    document.head.appendChild(link)
+  }
 }
 
 // 初始化
 onMounted(() => {
   loadConfigs()
-  startConfigRefresh()
 })
 </script>
 

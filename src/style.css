@@ -4,7 +4,7 @@
   font-weight: 400;
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: transparent !important; /* 确保根元素背景透明 */
   
   /* 主题颜色变量 */
   --primary: #ff4500;
@@ -60,6 +60,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden; /* 防止水平滚动条 */
+  background-color: transparent !important; /* 确保body背景透明 */
 }
 
 h1 {
@@ -97,12 +98,13 @@ button:focus-visible {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  background-color: transparent !important; /* 确保app容器背景透明 */
 }
 
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-color: transparent !important; /* 确保亮色模式也透明 */
   }
   
   a:hover {

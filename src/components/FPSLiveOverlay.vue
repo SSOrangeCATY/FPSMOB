@@ -1,33 +1,41 @@
 <template>
-  <div class="fps-overlay">
-    <!-- 回合信息 -->
-    <div class="round-info">
-      <div class="team-scores">
-        <div class="team-info">
-          <svg width="30" height="30" viewBox="0 0 30 30" class="team-logo" id="t_logo">
-            <rect width="30" height="30" fill="#FF9800" rx="2"/>
-            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" id="t_name">Spirit</text>
-          </svg>
-          <span class="team-name" id="t_name">Spirit</span>
-          <span class="team-score" id="t_score">{{ tWinnerRound }}</span>
+    <div class="fps-overlay">
+      <div class="round-info">
+        <div class="team-scores">
+          <div class="team-info">
+            <svg width="30" height="30" viewBox="0 0 30 30" class="team-logo" id="t_logo">
+              <rect width="30" height="30" :fill="props.config.teamConfig?.tTeam?.color || '#FF9800'" rx="2"/>
+              <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" id="t_name">{{ props.config.teamConfig?.tTeam?.name || 'T' }}</text>
+            </svg>
+            <span class="team-name" id="t_name" :style="{ marginLeft: teamNameMargin.t }">{{ props.config.teamConfig?.tTeam?.name || 'T' }}</span>
+          </div>
+          <div class="round-timer">
+            <span class="team-score" id="t_score">{{ tWinnerRound }}</span>
+            <div class="timer-content">
+              <img v-if="bombPlanted" :src="bombIcon" alt="C4" class="c4-icon" />
+              <span v-else class="round-number">{{ formatTime(roundTime) }}</span>
+            </div>
+            <span class="team-score" id="ct_score">{{ ctWinnerRound }}</span>
+          </div>
+          <div class="team-info">
+            <svg width="30" height="30" viewBox="0 0 30 30" class="team-logo" id="ct_logo">
+              <rect width="30" height="30" :fill="props.config.teamConfig?.ctTeam?.color || '#2196F3'" rx="2"/>
+              <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" id="ct_name">{{ props.config.teamConfig?.ctTeam?.name || 'CT' }}</text>
+            </svg>
+            <span class="team-name" id="ct_name" :style="{ marginRight: teamNameMargin.ct }">{{ props.config.teamConfig?.ctTeam?.name || 'CT' }}</span>
+          </div>
         </div>
-        <div class="round-timer">
-          <span class="round-number">1:03</span>
-        </div>
-        <div class="team-info">
-          <span class="team-score" id="ct_score">{{ ctWinnerRound }}</span>
-          <span class="team-name" id="ct_name">FaZe</span>
-          <svg width="30" height="30" viewBox="0 0 30 30" class="team-logo" id="ct_logo">
-            <rect width="30" height="30" fill="#2196F3" rx="2"/>
-            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" id="ct_name">FaZe</text>
-          </svg>
+  
+        <div class="round-bottom-progress" :class="{ 'visible': bombPlanted || bombDefusing }" v-if="bombPlanted || bombDefusing">
+          <div class="progress-track"></div>
+          <div v-if="bombPlanted" class="progress-fill bomb" :style="{ width: bombPercent + '%' }"></div>
+          <div v-if="bombDefusing && coverWidthPercent > 0" class="progress-fill cover" :style="{ width: coverWidthPercent + '%' }"></div>
+          <div v-if="bombDefusing" class="progress-fill defuse" :style="{ left: defuseLeftPercent + '%', width: defuseWidthPercent + '%' }"></div>
         </div>
       </div>
-    </div>
-
-    <!-- 左下角玩家信息 -->
+  
+    <!-- T方玩家信息 -->
     <div class="t_player-cards">
-      <!-- T方玩家 -->
       <div 
         v-for="player in tSidePlayers" 
         :key="player.id"
@@ -49,9 +57,11 @@
           </div>
         </div>
       <span class="player-eco">{{ player.money }}</span>
-        <div v-if="player.status === 'alive'" class="player-health">
-          <div 
-            class="health-bg"
+        <div class="player-health">
+        <div 
+          v-if="player.status === 'alive'"
+            class="health-bg" 
+            :style="{ height: '33%', width: player.health + '%' }"
           />
           
           <template v-if="player.alive">
@@ -76,11 +86,11 @@
               <div class="dead-kd">
                 <div class="kd-values">
                   <span class="kd-value">
-                    <svg t="1757288729344" class="kd-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7062" ><path d="M502.656 448a56 56 0 1 0 0 112 56 56 0 0 0 0-112z m0-352C277.312 96 94.64 278.672 94.64 504S277.312 912 502.64 912C728 912 910.656 729.312 910.656 504S728 96 502.656 96zM544 829.312V688h-80v141.312C320 811.136 195.488 688 177.312 544H320v-80h-142.688C195.488 320 320 196.848 464 178.672V320h80v-141.328C688 196.848 809.808 320 827.968 464H688v80h139.968C809.824 688 688 811.152 544 829.312z" fill="#FFFFFF" p-id="7063"></path></svg>
+                    <svg t="1757288729344" class="kd-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7062" width="14" height="14"><path d="M502.656 448a56 56 0 1 0 0 112 56 56 0 0 0 0-112z m0-352C277.312 96 94.64 278.672 94.64 504S277.312 912 502.64 912C728 912 910.656 729.312 910.656 504S728 96 502.656 96zM544 829.312V688h-80v141.312C320 811.136 195.488 688 177.312 544H320v-80h-142.688C195.488 320 320 196.848 464 178.672V320h80v-141.328C688 196.848 809.808 320 827.968 464H688v80h139.968C809.824 688 688 811.152 544 829.312z" fill="#FFFFFF" p-id="7063"></path></svg>
                     {{ player.kills }}
                   </span>
                   <span class="kd-value">
-                    <svg t="1757288453810" class="kd-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6010" ><path d="M853.34016 384A298.65984 298.65984 0 0 0 554.65984 85.34016h-85.31968A298.65984 298.65984 0 0 0 170.65984 384v42.65984c0 24.6784 25.25184 29.65504 25.25184 42.68032 0 13.0048-25.25184 29.63456-25.25184 42.65984v42.65984A85.34016 85.34016 0 0 0 256 640h128v85.34016a42.65984 42.65984 0 0 0 42.65984 42.65984h21.34016v-42.65984h42.65984V768h42.68032v-42.65984h42.65984V768h21.34016a42.65984 42.65984 0 0 0 42.65984-42.65984V640h128a85.34016 85.34016 0 0 0 85.34016-85.34016V512c0-19.33312-25.25184-29.65504-25.25184-42.65984 0-13.02528 25.25184-20.6848 25.25184-42.68032V384z m-414.49472 88.76032c-20.7872 90.48064-54.00576 75.03872-97.81248 73.58464-46.4896-1.59744-77.57824-6.02112-87.32672-26.68544-23.8592-28.18048-20.15232-157.4912 94.67904-109.28128 51.99872 21.83168 96.91136 39.13728 90.46016 62.38208z m101.6832 181.3504c-22.36416 0-16.9984-25.94816-28.52864-25.76384-12.0832 0.24576-8.3968 25.76384-30.1056 25.76384a22.81472 22.81472 0 0 1-22.38464-28.83584 280.1664 280.1664 0 0 1 32.1536-63.36512 22.85568 22.85568 0 0 1 39.07584 0c13.37344 19.6608 24.20736 40.96 32.19456 63.36512a22.85568 22.85568 0 0 1-22.40512 28.83584z m228.49536-134.4512c-9.74848 20.6848-40.83712 25.088-87.32672 26.68544-43.78624 1.45408-77.0048 16.896-97.81248-73.58464-6.4512-23.2448 38.48192-40.5504 90.46016-62.38208 114.83136-48.2304 118.53824 81.1008 94.67904 109.28128z" fill="#FFFFFF" p-id="6011"></path><path d="M704 750.22336a85.34016 85.34016 0 0 1-85.34016 85.34016h-42.65984v39.1168h-42.65984v-39.1168h-42.68032v39.1168h-42.65984v-39.1168h-42.65984a85.34016 85.34016 0 0 1-85.34016-85.34016v-67.56352H256v116.30592a85.31968 85.31968 0 0 0 35.47136 69.2224l135.18848 97.3824 25.6-12.8a133.57056 133.57056 0 0 1 119.48032 0l25.6 12.8 135.18848-97.36192a85.34016 85.34016 0 0 0 35.47136-69.24288v-116.30592h-64v67.56352z" fill="#FFFFFF" p-id="6012"></path></svg>
+                    <svg t="1757288453810" class="kd-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6010" width="14" height="14"><path d="M853.34016 384A298.65984 298.65984 0 0 0 554.65984 85.34016h-85.31968A298.65984 298.65984 0 0 0 170.65984 384v42.65984c0 24.6784 25.25184 29.65504 25.25184 42.68032 0 13.0048-25.25184 29.63456-25.25184 42.65984v42.65984A85.34016 85.34016 0 0 0 256 640h128v85.34016a42.65984 42.65984 0 0 0 42.65984 42.65984h21.34016v-42.65984h42.65984V768h42.68032v-42.65984h42.65984V768h21.34016a42.65984 42.65984 0 0 0 42.65984-42.65984V640h128a85.34016 85.34016 0 0 0 85.34016-85.34016V512c0-19.33312-25.25184-29.65504-25.25184-42.65984 0-13.02528 25.25184-20.6848 25.25184-42.68032V384z m-414.49472 88.76032c-20.7872 90.48064-54.00576 75.03872-97.81248 73.58464-46.4896-1.59744-77.57824-6.02112-87.32672-26.68544-23.8592-28.18048-20.15232-157.4912 94.67904-109.28128 51.99872 21.83168 96.91136 39.13728 90.46016 62.38208z m101.6832 181.3504c-22.36416 0-16.9984-25.94816-28.52864-25.76384-12.0832 0.24576-8.3968 25.76384-30.1056 25.76384a22.81472 22.81472 0 0 1-22.38464-28.83584 280.1664 280.1664 0 0 1 32.1536-63.36512 22.85568 22.85568 0 0 1 39.07584 0c13.37344 19.6608 24.20736 40.96 32.19456 63.36512a22.85568 22.85568 0 0 1-22.40512 28.83584z m228.49536-134.4512c-9.74848 20.6848-40.83712 25.088-87.32672 26.68544-43.78624 1.45408-77.0048 16.896-97.81248-73.58464-6.4512-23.2448 38.48192-40.5504 90.46016-62.38208 114.83136-48.2304 118.53824 81.1008 94.67904 109.28128z" fill="#FFFFFF" p-id="6011"></path><path d="M704 750.22336a85.34016 85.34016 0 0 1-85.34016 85.34016h-42.65984v39.1168h-42.65984v-39.1168h-42.68032v39.1168h-42.65984v-39.1168h-42.65984a85.34016 85.34016 0 0 1-85.34016-85.34016v-67.56352H256v116.30592a85.31968 85.31968 0 0 0 35.47136 69.2224l135.18848 97.3824 25.6-12.8a133.57056 133.57056 0 0 1 119.48032 0l25.6 12.8 135.18848-97.36192a85.34016 85.34016 0 0 0 35.47136-69.24288v-116.30592h-64v67.56352z" fill="#FFFFFF" p-id="6012"></path></svg>
                     {{ player.deaths }}
                   </span>
                 </div>
@@ -159,710 +169,570 @@
       </div>
     </div>
 
-    <!-- 赞助商广告 -->
-    <div class="sponsor-banner">
-      <svg width="120" height="30" viewBox="0 0 120 30">
-        <rect width="120" height="30" fill="#1A1A1A" rx="4"/>
-        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10">MCCS2</text>
-      </svg>
+    <!-- 广告栏 -->
+    <div 
+      v-if="shouldShowAd"
+      class="ad-banner"
+      :class="adPositionClass"
+    >
+      <img 
+        v-if="adConfig.imageUrl" 
+        :src="adConfig.imageUrl" 
+        alt="ad" 
+        class="ad-image"
+      />
+      <span v-if="adConfig.text" class="ad-text">{{ adConfig.text }}</span>
     </div>
   </div>
-</template>
-
-<script setup>
-import { ref, onMounted, onUnmounted, defineProps, watch } from 'vue'
-
-const props = defineProps({
-  config: {
-    type: Object,
-    required: true,
-    default: () => ({
-      apiConfig: {},
-      uiConfig: {},
-      styleConfig: {}
-    })
-  }
-})
-
-const tSidePlayers = ref([])
-const ctSidePlayers = ref([])
-const ctWinnerRound = ref(0)
-const tWinnerRound = ref(0)
-const currentRound = ref(0)
-const roundTime = ref(0)
-const FuseTime = ref(0)
-
-// 从API获取数据
-async function fetchGameData() {
-  try {
-    const response = await fetch('/api/data')
-    if (response.ok) {
-      return await response.json()
+  </template>
+  
+  <script setup>
+  import { ref, onMounted, onUnmounted, defineProps, watch, computed } from 'vue'
+  
+  const props = defineProps({
+    config: {
+      type: Object,
+      required: true,
+      default: () => ({
+        uiConfig: {},
+        styleConfig: {},
+        teamConfig: {
+          ctTeam: { name: 'CT', icon: 'ct_logo.svg', color: '#2196F3' },
+          tTeam: { name: 'T', icon: 't_logo.svg', color: '#FF9800' },
+        },
+        syncConfig: {
+          syncMode: 'active',
+          syncInterval: 5000,
+          apiUrl: '',
+          apiKey: '',
+          localFilePath: '',
+          localFileInterval: 10,
+        },
+      }),
+    },
+  })
+  
+  const tSidePlayers = ref([])
+  const ctSidePlayers = ref([])
+  const ctWinnerRound = ref(0)
+  const tWinnerRound = ref(0)
+  const currentRound = ref(0)
+  const roundTime = ref(0)
+  const FuseTime = ref(0)
+  const bombPlanted = ref(false)
+  const bombDefusing = ref(false)
+  const roundStatus = ref('live')
+  const bombFuse = ref(0)
+  const bombTotalFuse = ref(800)
+  const dismantleBombProgress = ref(0)
+  const isAdVisible = ref(false)
+  let adCycleInterval = null
+  let adHideTimeout = null
+  
+  const bombPercent = computed(() => {
+    const fuse = Number(bombFuse.value || 0)
+    const total = Number(bombTotalFuse.value || 100)
+    return Math.max(0, Math.min(100, ((total - fuse) / total) * 100))
+  })
+  const defusePercent = computed(() => {
+    return Math.max(0, Math.min(100, (Number(dismantleBombProgress.value || 0) * 100)))
+  })
+  
+  const defuseLeftPercent = computed(() => {
+    const defuse = defusePercent.value
+    return Math.max(0, Math.min(100, Math.min(defuse, bombPercent.value)))
+  })
+  
+  const defuseWidthPercent = computed(() => {
+    const defuse = defusePercent.value
+    return Math.max(0, defuse - defuseLeftPercent.value)
+  })
+  const coverWidthPercent = computed(() => {
+    return Math.max(0, Math.min(bombPercent.value, defusePercent.value))
+  })
+  
+  // C4 图片
+  const bombIcon = new URL('/src/assets/c4_3.png', import.meta.url).href
+  
+  const teamNameLength = ref({ t: 0, ct: 0 })
+  const teamNameMargin = ref({ t: '0px', ct: '0px' })
+  
+  function calculateTeamNameSymmetry() {
+    const tName = props.config.teamConfig?.tTeam?.name || 'T'
+    const ctName = props.config.teamConfig?.ctTeam?.name || 'CT'
+    const tLength = tName.length
+    const ctLength = ctName.length
+    const diff = Math.abs(tLength - ctLength)
+    if (tLength > ctLength) {
+      teamNameMargin.value = { t: '0px', ct: `${diff * 4}px` }
+    } else if (ctLength > tLength) {
+      teamNameMargin.value = { t: `${diff * 4}px`, ct: '0px' }
     } else {
-      console.error('Failed to fetch game data:', response.status)
+      teamNameMargin.value = { t: '0px', ct: '0px' }
+    }
+    teamNameLength.value = { t: tLength, ct: ctLength }
+  }
+  
+  watch(() => props.config.teamConfig, () => {
+    calculateTeamNameSymmetry()
+  }, { deep: true, immediate: true })
+  
+  function formatTime(totalSeconds) {
+    const seconds = Math.max(0, Math.floor(totalSeconds || 0))
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    const minutesPart = mins.toString().padStart(2, '0')
+    const secondsPart = secs.toString().padStart(2, '0')
+    return `${minutesPart}:${secondsPart}`
+  }
+  
+  async function fetchGameData() {
+    try {
+      const response = await fetch('/api/data')
+      if (response.ok) {
+        return await response.json()
+      }
+      return null
+    } catch (e) {
+      console.error(e)
       return null
     }
-  } catch (error) {
-    console.error('Error fetching game data:', error)
-    return null
   }
-}
-
-// 从API数据初始化玩家数据 - 直接使用API数据作为引用
-async function initializePlayersFromApi() {
-  // 从API获取数据
-  const apiMessage = await fetchGameData()  
-  if (apiMessage && apiMessage.tabData) {
-    // 计算当前总回合数
-    ctWinnerRound.value = apiMessage.cTWinnerRounds || 0
-    tWinnerRound.value = apiMessage.tWinnerRounds || 0
-    currentRound.value = (apiMessage.tWinnerRounds || 0) + (apiMessage.cTWinnerRounds || 0) + 1
-    
-    // 记录当前API中的所有玩家ID，用于后续清理不存在的玩家
-    const currentPlayerIds = new Set()
-    
-    // 遍历API数据中的tabData获取玩家数据
-    Object.keys(apiMessage.tabData).forEach(playerId => {
-      currentPlayerIds.add(playerId)
-      
-      // 获取原始API数据
-      const rawPlayerData = apiMessage.tabData[playerId]
-      
-      // 计算需要的派生数据
-      const team = rawPlayerData.team
-
-      // 创建玩家数据引用，保留原始数据结构的引用
-      const playerData = {
-        // 直接引用原始数据的关键属性
-        id: playerId,
-        rawData: rawPlayerData,        
-        // 计算属性，但使用getter确保每次访问都是最新值
-        get name() { return this.rawData.name || this.rawData.data?.name || 'Unknown' },
-        get kills() { return this.rawData.data?.kills || 0 },
-        get deaths() { return this.rawData.data?.deaths || 0 },
-        get health() { return this.rawData.health || 0 },
-        get money() { return "$"+ this.rawData.money || 0 },
-        get hasHelmet() { return this.rawData.bpAttributeHasHelmet || false },
-        get armor() { return this.rawData.bpAttributeDurability || 0 },
-        get alive() { return this.rawData.living || false },
-        get status() { return this.alive ? 'alive' : 'dead' },
-        get damage() { return this.rawData.data?.damage || 0},
-        get adr() { return currentRound.value > 0 ? Math.round(this.damage / currentRound.value) : 0 },
-        get weaponName() { return this.rawData.items && this.rawData.items.CARRIED && this.rawData.items.CARRIED.length > 0 ? this.rawData.items.CARRIED[0] : '' },
-        get team() { return team },
-        get element() {
-          return document.getElementById(this.id)
-        }
-      }
-      
-      // 尝试查找现有玩家
-      const existingPlayerIndex = team === 't' 
-        ? tSidePlayers.value.findIndex(p => p.id === playerId)
-        : ctSidePlayers.value.findIndex(p => p.id === playerId)
-      
-      // 如果玩家已存在，更新其rawData引用
-      if (existingPlayerIndex !== -1) {
-        if (team === 't') {
-          tSidePlayers.value[existingPlayerIndex].rawData = rawPlayerData
-        } else {
-          ctSidePlayers.value[existingPlayerIndex].rawData = rawPlayerData
-        }
+  
+  async function initializePlayersFromApi() {
+    const apiMessage = await fetchGameData()
+    if (apiMessage && apiMessage.tabData) {
+      ctWinnerRound.value = apiMessage.cTWinnerRounds || 0
+      tWinnerRound.value = apiMessage.tWinnerRounds || 0
+      currentRound.value = (apiMessage.tWinnerRounds || 0) + (apiMessage.cTWinnerRounds || 0) + 1
+      const timeTicksOrSeconds = apiMessage.time || 0
+      roundTime.value = timeTicksOrSeconds / 20
+  
+      bombFuse.value = apiMessage.bombFuse || 0
+      bombTotalFuse.value = apiMessage.bombTotalFuse || 100
+      dismantleBombProgress.value = apiMessage.dismantleBombProgress || 0
+      bombPlanted.value = bombFuse.value > 0
+      bombDefusing.value = dismantleBombProgress.value > 0
+  
+      if (apiMessage.isWarmTime) {
+        roundStatus.value = 'warmup'
+      } else if (apiMessage.isPause) {
+        roundStatus.value = 'pause'
+      } else if (bombPlanted.value) {
+        roundStatus.value = 'bomb_planted'
+      } else if (bombDefusing.value) {
+        roundStatus.value = 'bomb_defusing'
       } else {
-        // 如果玩家不存在，添加新玩家数据引用
-        if (team === 't') {
-          tSidePlayers.value.push(playerData)
-        } else if (team === 'ct') {
-          ctSidePlayers.value.push(playerData)
-        }
+        roundStatus.value = 'live'
       }
-    })
-    
-    // 清理不存在的玩家
-    tSidePlayers.value = tSidePlayers.value.filter(player => currentPlayerIds.has(player.id))
-    ctSidePlayers.value = ctSidePlayers.value.filter(player => currentPlayerIds.has(player.id))
-  }
-}
+  
+      const currentPlayerIds = new Set()
+      Object.keys(apiMessage.tabData).forEach(playerId => {
+        currentPlayerIds.add(playerId)
+        const rawPlayerData = apiMessage.tabData[playerId]
+        const team = rawPlayerData.team
+        
+        // 检查玩家是否已存在，如果存在且队伍不同，先移除
+        const existingTIndex = tSidePlayers.value.findIndex(p => p.id === playerId)
+        const existingCTIndex = ctSidePlayers.value.findIndex(p => p.id === playerId)
+        if (existingTIndex !== -1 && team !== 't') {
+          tSidePlayers.value.splice(existingTIndex, 1)
+        }
+        if (existingCTIndex !== -1 && team !== 'ct') {
+          ctSidePlayers.value.splice(existingCTIndex, 1)
+        }
+        
+        const playerData = {
+          id: playerId,
+          rawData: rawPlayerData,
+          get name() { return this.rawData.name || this.rawData.data?.name || 'Unknown' },
+          get kills() { return (this.rawData.kills ?? this.rawData.data?.kills ?? 0) },
+          get deaths() { return (this.rawData.deaths ?? this.rawData.data?.deaths ?? 0) },
+          get health() { return Math.round(this.rawData.health || 0) },
+          get money() { const m = (this.rawData.money ?? this.rawData.data?.money ?? 0); return `$${m}` },
+          get hasHelmet() { return this.rawData.bpAttributeHasHelmet || false },
+          get armor() {
+            const d = this.rawData.bpAttributeDurability
+            if (d == null) return 0
+            return d <= 1 ? Math.round(d * 100) : d
+          },
+          get alive() { return this.rawData.living || false },
+          get status() { return this.alive ? 'alive' : 'dead' },
+          get damage() { return (this.rawData.damage ?? this.rawData.data?.damage ?? 0) },
+          get adr() { return currentRound.value > 0 ? Math.round(this.damage / currentRound.value) : 0 },
+          get weaponName() {
+            const items = this.rawData.items || {}
+            const main = Array.isArray(items.MAIN_WEAPON) ? items.MAIN_WEAPON : []
+            if (main.length > 0) return main[0]
+            const secondary = Array.isArray(items.SECONDARY_WEAPON) ? items.SECONDARY_WEAPON : []
+            if (secondary.length > 0) return secondary[0]
+            const third = Array.isArray(items.THIRD_WEAPON) ? items.THIRD_WEAPON : []
+            if (third.length > 0) return third[0]
+            const carried = Array.isArray(items.CARRIED) ? items.CARRIED : []
+            if (carried.length > 0) return carried[0]
+            return ''
+          },
+          get team() { return team },
+          get element() { return document.getElementById(this.id) },
+        }
 
-// 定时器引用
-let updateInterval = null
-
-// 监听配置变化
-watch(() => props.config, (newConfig) => {
-  // 当配置变化时，可以重新应用样式或调整显示逻辑
-  applyConfigStyles(newConfig.styleConfig)
-}, { deep: true })
-
-// 应用配置样式
-function applyConfigStyles(styleConfig) {
-  // 应用字体设置
-  if (styleConfig.fontFamily) {
-    document.documentElement.style.setProperty('--font-family', styleConfig.fontFamily)
+        // 添加到对应队伍
+        if (team === 't') {
+          const existingIndex = tSidePlayers.value.findIndex(p => p.id === playerId)
+          if (existingIndex !== -1) {
+            tSidePlayers.value[existingIndex].rawData = rawPlayerData
+          } else {
+            tSidePlayers.value.push(playerData)
+          }
+        } else if (team === 'ct') {
+          const existingIndex = ctSidePlayers.value.findIndex(p => p.id === playerId)
+          if (existingIndex !== -1) {
+            ctSidePlayers.value[existingIndex].rawData = rawPlayerData
+          } else {
+            ctSidePlayers.value.push(playerData)
+          }
+        }
+      })
+  
+      tSidePlayers.value = tSidePlayers.value.filter(player => currentPlayerIds.has(player.id))
+      ctSidePlayers.value = ctSidePlayers.value.filter(player => currentPlayerIds.has(player.id))
+    }
   }
   
-  // 应用自定义CSS
-  if (styleConfig.customCSS) {
-    const styleElement = document.getElementById('custom-css') || document.createElement('style')
-    styleElement.id = 'custom-css'
-    styleElement.textContent = styleConfig.customCSS
-    document.head.appendChild(styleElement)
-  }
-}
-
-onMounted(() => {
-  // 初始应用配置样式
-  applyConfigStyles(props.config.styleConfig || {})
+  let updateInterval = null
   
-  // 设置定时更新从API获取数据（每50毫秒更新一次）
-  updateInterval = setInterval(() => {
-    initializePlayersFromApi()
-  }, 50)
-})
-
-onUnmounted(() => {
-  // 清理定时器
-  if (updateInterval) {
-    clearInterval(updateInterval)
+  watch(() => props.config, (newConfig) => {
+    applyConfigStyles(newConfig.styleConfig)
+    updateTeamInfo(newConfig.teamConfig)
+    if (newConfig && newConfig.teamConfig) {
+      updateTeamInfo()
+      loadTeamIcons()
+    }
+  }, { deep: true })
+  
+  function loadTeamIcons() {
+    if (!props.config?.teamConfig) return
+    const { ctTeam, tTeam } = props.config.teamConfig
+    const ctIconPath = ctTeam?.icon ? new URL(`/src/assets/${ctTeam.icon}`, import.meta.url).href : null
+    loadTeamIcon('ct', ctIconPath, ctTeam?.color || '#2196F3', ctTeam?.name || 'CT')
+    const tIconPath = tTeam?.icon ? new URL(`/src/assets/${tTeam.icon}`, import.meta.url).href : null
+    loadTeamIcon('t', tIconPath, tTeam?.color || '#FF5722', tTeam?.name || 'T')
   }
   
-  // 清理自定义CSS
-  const customStyle = document.getElementById('custom-css')
-  if (customStyle) {
-    customStyle.remove()
+  function updateTeamInfo(teamConfig) {
+    if (teamConfig) {
+      iconLoadStatus.value.t.loaded = false
+      iconLoadStatus.value.t.error = false
+      iconLoadStatus.value.ct.loaded = false
+      iconLoadStatus.value.ct.error = false
+      const tLogo = document.getElementById('t_logo')
+      const tName = document.getElementById('t_name')
+      if (tLogo && teamConfig.tTeam) {
+        loadTeamIcon('t', teamConfig.tTeam.icon, teamConfig.tTeam.color, teamConfig.tTeam.name || 'T')
+      }
+      if (tName && teamConfig.tTeam) {
+        tName.textContent = teamConfig.tTeam.name || 'T'
+      }
+      const ctLogo = document.getElementById('ct_logo')
+      const ctName = document.getElementById('ct_name')
+      if (ctLogo && teamConfig.ctTeam) {
+        loadTeamIcon('ct', teamConfig.ctTeam.icon, teamConfig.ctTeam.color, teamConfig.ctTeam.name || 'CT')
+      }
+      if (ctName && teamConfig.ctTeam) {
+        ctName.textContent = teamConfig.ctTeam.name || 'CT'
+      }
+    }
   }
-})
-</script>
-
-
-
-<style scoped>
-/* 全局SVG图标样式 - 确保所有SVG都显示为白色 */
-img[src$=".svg"] {
-  filter: brightness(0) invert(1);
-}
-
-.fps-overlay {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  background-color: transparent;
-  pointer-events: none;
-  font-family: 'Arial', sans-serif;
-  color: white;
-}
-
-/* 回合信息 */
-.round-info {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #333331; /* 设置为不透明 */
-  border: 0px solid #333;
-  border-radius: 9px;
-  padding: 15px 30px;
-  z-index: 100;
-}
-
-/* 左侧队伍颜色竖条 - 假设T方主色为红色 */
-.round-info::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  background-color: #FFD700; /* T方主色 - 红色 */
-  border-top-left-radius: 9px;
-  border-bottom-left-radius: 9px;
-}
-
-/* 右侧队伍颜色竖条 - 假设CT方主色为蓝色 */
-.round-info::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  background-color: #1E90FF; /* CT方主色 - 蓝色 */
-  border-top-right-radius: 9px;
-  border-bottom-right-radius: 9px;
-}
-
-.team-scores {
-  display: flex;
-  gap: 60px;
-}
-
-.team-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.team-logo {
-  width: 45px;
-  height: 45px;
-  border-radius: 6px;
-}
-
-.team-name {
-  font-weight: bold;
-  font-size: 21px;
-}
-
-.team-score {
-  font-size: 36px;
-  font-weight: bold;
-  color: white;
-}
-
-.round-timer {
-  display: flex;
-  align-items: center;
-}
-
-.round-number {
-  font-size: 26px;
-  font-weight: bold;
-  color: white;
-}
-
-.progress-bar {
-  width: 150px;
-  height: 9px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 4.5px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  width: 60%;
-  height: 100%;
-  background-color: #4CAF50;
-}
-
-/* 玩家卡片 */
-.t_player-cards {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  z-index: 100;
-}
-
-.ct_player-cards {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  z-index: 100;
-}
-
-.player-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: bold;
-}
-
-.player-name {
-  font-size: 20px;
-}
-
-.player-weapon {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 5px;
-  opacity: 0.8;
-}
-
-.weapon-icon {
-  width: 20px;
-  height: 20px;
-}
-
-.health-bg {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    background-color: #4CAF50;
-    opacity: 1;
-    border-radius: 4px;
-    z-index: 5;
-    height: 33%;
-    transition: all 0.5s ease-out;
+  
+  const iconLoadStatus = ref({
+    t: { loaded: false, error: false },
+    ct: { loaded: false, error: false },
+  })
+  
+  function loadTeamIcon(teamType, iconPath, fallbackColor, fallbackText) {
+    const logoElement = document.getElementById(`${teamType}_logo`)
+    if (!logoElement) return
+    if (!iconPath) {
+      showSvgPlaceholder(logoElement, fallbackColor, fallbackText)
+      return
+    }
+    if (logoElement.tagName === 'IMG') {
+      logoElement.src = iconPath
+      return
+    }
+    const img = new Image()
+    img.onload = () => {
+      iconLoadStatus.value[teamType].loaded = true
+      iconLoadStatus.value[teamType].error = false
+      if (logoElement.tagName === 'svg') {
+        const parent = logoElement.parentElement
+        const newImg = document.createElement('img')
+        newImg.src = iconPath
+        newImg.alt = `${fallbackText} Logo`
+        newImg.className = 'team-logo'
+        newImg.style.width = '30px'
+        newImg.style.height = '30px'
+        newImg.style.objectFit = 'contain'
+        parent.replaceChild(newImg, logoElement)
+      } else {
+        logoElement.src = iconPath
+      }
+    }
+    img.onerror = () => {
+      iconLoadStatus.value[teamType].loaded = false
+      iconLoadStatus.value[teamType].error = true
+      showSvgPlaceholder(logoElement, fallbackColor, fallbackText)
+    }
+    img.src = iconPath
   }
-
-  /* 设置血条高度与player-health一致 */
-.player-card.alive .health-bg {
-  height: 100% !important;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: 0;
-  padding: 0;
-}
-
-/* T队伍（右侧卡片）血条背景色 - 已互换 */
-.player-card.alive.ct-card .health-bg {
-  background-color: #336FDE;
-}
-
-/* CT队伍（左侧卡片）血条背景色 - 已互换 */
-.player-card.alive.left-card .health-bg {
-  background-color: #F1A136;
-}
-
-  /* 死亡选手血条样式 - 设为深灰色，确保完全不透明 */
-  .player-card.dead .health-bg {
-    background-color: #444444 !important;
-    height: 100% !important;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
-    padding: 0;
-    opacity: 1 !important;
+  
+  function showSvgPlaceholder(logoElement, color, text) {
+    if (logoElement.tagName === 'IMG') {
+      const parent = logoElement.parentElement
+      const newSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      newSvg.setAttribute('width', '30')
+      newSvg.setAttribute('height', '30')
+      newSvg.setAttribute('viewBox', '0 0 30 30')
+      newSvg.className = 'team-logo'
+      newSvg.id = logoElement.id
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+      rect.setAttribute('width', '30')
+      rect.setAttribute('height', '30')
+      rect.setAttribute('fill', color)
+      rect.setAttribute('rx', '2')
+      const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+      textElement.setAttribute('x', '50%')
+      textElement.setAttribute('y', '50%')
+      textElement.setAttribute('dominant-baseline', 'middle')
+      textElement.setAttribute('text-anchor', 'middle')
+      textElement.setAttribute('fill', 'white')
+      textElement.setAttribute('font-size', '10')
+      textElement.textContent = text
+      newSvg.appendChild(rect)
+      newSvg.appendChild(textElement)
+      parent.replaceChild(newSvg, logoElement)
+    } else {
+      const rect = logoElement.querySelector('rect')
+      const textElement = logoElement.querySelector('text')
+      if (rect) rect.setAttribute('fill', color)
+      if (textElement) textElement.textContent = text
+    }
+    logoElement.style.display = 'block'
   }
+  
+  function applyConfigStyles(styleConfig) {
+    if (styleConfig.fontFamily) {
+      document.documentElement.style.setProperty('--font-family', styleConfig.fontFamily)
+    }
+    if (styleConfig.customCSS) {
+      const styleElement = document.getElementById('custom-css') || document.createElement('style')
+      styleElement.id = 'custom-css'
+      styleElement.textContent = styleConfig.customCSS
+      document.head.appendChild(styleElement)
+    }
+  }
+  
+  onMounted(() => {
+    applyConfigStyles(props.config.styleConfig || {})
+    loadTeamIcons()
+    updateInterval = setInterval(() => {
+      initializePlayersFromApi()
+    }, 50)
+    setupAdCycle()
+  })
+  
+  onUnmounted(() => {
+    if (updateInterval) {
+      clearInterval(updateInterval)
+    }
+    const customStyle = document.getElementById('custom-css')
+    if (customStyle) customStyle.remove()
+    if (adCycleInterval) {
+      clearInterval(adCycleInterval)
+      adCycleInterval = null
+    }
+    if (adHideTimeout) {
+      clearTimeout(adHideTimeout)
+      adHideTimeout = null
+    }
+  })
 
-  .health-value {
-    font-size: 20px;
-    min-width: 30px;
-    text-align: right;
+  // ===== 广告配置与显示逻辑 =====
+  const uiConfig = computed(() => props.config?.uiConfig || {})
+  const adConfig = computed(() => {
+    const cfg = uiConfig.value?.adCardConfig || {}
+    return {
+      enabled: cfg.enabled ?? false,
+      text: cfg.text || '',
+      imageUrl: cfg.imageUrl || '',
+      position: cfg.position || 'bottom-right',
+      duration: Number(cfg.duration || 30),
+      interval: Number(cfg.interval || 300),
+    }
+  })
+  const shouldShowAd = computed(() => (uiConfig.value.showAdCard && adConfig.value.enabled && isAdVisible.value))
+  const adPositionClass = computed(() => {
+    const pos = adConfig.value.position
+    return {
+      'pos-top-left': pos === 'top-left',
+      'pos-top-right': pos === 'top-right',
+      'pos-bottom-left': pos === 'bottom-left',
+      'pos-bottom-right': pos === 'bottom-right',
+    }
+  })
+  function clearAdTimers() {
+    if (adCycleInterval) {
+      clearInterval(adCycleInterval)
+      adCycleInterval = null
+    }
+    if (adHideTimeout) {
+      clearTimeout(adHideTimeout)
+      adHideTimeout = null
+    }
+  }
+  function setupAdCycle() {
+    clearAdTimers()
+    // 若广告未启用，或未选中显示，则不启动
+    if (!(uiConfig.value.showAdCard && adConfig.value.enabled)) {
+      isAdVisible.value = false
+      return
+    }
+    // 立即显示一次
+    isAdVisible.value = true
+    adHideTimeout = setTimeout(() => {
+      isAdVisible.value = false
+    }, Math.max(1, adConfig.value.duration) * 1000)
+    // 周期性显示
+    adCycleInterval = setInterval(() => {
+      isAdVisible.value = true
+      if (adHideTimeout) clearTimeout(adHideTimeout)
+      adHideTimeout = setTimeout(() => {
+        isAdVisible.value = false
+      }, Math.max(1, adConfig.value.duration) * 1000)
+    }, Math.max(adConfig.value.duration + 1, adConfig.value.interval) * 1000)
+  }
+  watch(() => props.config?.uiConfig, () => {
+    setupAdCycle()
+  }, { deep: true })
+  </script>
+  
+  <style scoped>
+  .fps-overlay {
     position: relative;
-    z-index: 10;
-    color: #ffffff;
-    font-weight: bold;
   }
-  
-  /* 血量和护盾容器样式 */
-  .health-with-shield {
+  .round-info {
+    position: relative;
+  }
+  .team-scores {
     display: flex;
     align-items: center;
-    gap: 2px;
-    position: relative;
+    justify-content: space-between;
+  }
+  .round-timer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .timer-content {
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .round-number {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .c4-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
+  /* ===== 广告样式 ===== */
+  .ad-banner {
+    position: absolute;
     z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    backdrop-filter: blur(6px);
+    color: #fff;
   }
-  
-  /* 护盾容器样式 */
-  .shield-container {
-    position: relative;
-    width: 24px;
-    height: 24px;
-  }
-
-  /* 护盾图标样式 */
-  .shield-icon {
+  .ad-banner.pos-top-left { top: 12px; left: 12px; }
+  .ad-banner.pos-top-right { top: 12px; right: 12px; }
+  .ad-banner.pos-bottom-left { bottom: 12px; left: 12px; }
+  .ad-banner.pos-bottom-right { bottom: 12px; right: 12px; }
+  .ad-image { height: 32px; width: auto; object-fit: contain; }
+  .ad-text { font-size: 14px; font-weight: 600; }
+  .round-bottom-progress {
     position: absolute;
-    top: 0;
+    left: 6px;
+    right: 6px;
+    bottom: 0;
+    height: 8px;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .round-bottom-progress.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .progress-track {
+    position: absolute;
     left: 0;
-    width: 24px;
-    height: 24px;
-    fill: #FFFFFF;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: #4C4C4A;
+    border-radius: 0;
+    z-index: 0;
   }
-
-  /* 头盔图标样式*/
-  .helmet-icon {
+  .progress-fill {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 16px;
-    height: 16px;
-    fill: #FFFFFF;
-    z-index: 20;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 0;
+    transition: width 0.3s ease, left 0.3s ease;
   }
-  
-  /* 确保右侧卡片的血量值向右对齐 */
-  .ct-card .health-value {
-    text-align: right !important;
+  .progress-fill.bomb {
+    background: linear-gradient(90deg, #ff9800, #ff4500);
+    z-index: 1;
   }
-  
-  /* 右侧卡片的护盾容器位置调整 */
-  .ct-card .shield-container {
-    margin-left: 5px;
+  .progress-fill.cover {
+    background: #4C4C4A;
+    z-index: 2;
   }
-
-.player-info {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 5px;
-  font-size: 10px;
-  opacity: 0.8;
-  align-items: center;
-}
-
-/* 赞助商广告 */
-.sponsor-banner {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
-}
-
-.sponsor-banner svg {
-  border-radius: 4px;
-}
-
-/* 调整玩家卡片样式 */
-.t_player-cards {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  z-index: 100;
-}
-
-.ct_player-cards {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  z-index: 100;
-}
-
-/* 玩家卡片基础样式和过渡效果 */
-.player-card {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  background-color: rgba(0, 0, 0, 0.9);
-  border-radius: 6px;
-  padding: 5px;
-  height: 90px;
-  font-size: 36px;
-  position: relative;
-  overflow: hidden;
-}
-
-/* 存活玩家卡片样式 */
-.player-card.alive {
-  min-width: 300px;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* 死亡玩家卡片样式 - 与存活玩家保持一致 */
-.player-card.dead {
-  min-width: 180px;
-  opacity: 0.8;
-  transform: translateY(10px);
-}
-
-/* 玩家名称过渡效果 */
-.player-name {
-  transition: color 0.5s ease;
-}
-
-/* 健康值过渡效果 */
-.health-value {
-  transition: all 0.5s ease;
-}
-
-/* 死亡卡片在血条中显示统计数据 */
-.dead-stats-in-health {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  position: relative;
-  z-index: 10;
-}
-
-/* 死亡选手KD容器样式 */
-.dead-kd {
-  display: flex;
-  align-items: center;
-}
-
-/* 死亡选手名称样式调整 */
-.player-card.dead .player-name {
-  color: #ccc;
-}
-
-/* ADR数据显示 */
-.dead-adr {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.adr-value {
-  font-size: 15px;
-  color: #7c7c7c;
-  font-weight: bold;
-}
-
-.adr-label {
-  font-size: 12px;
-  color: #7c7c7c;
-  font-weight: bold;
-}
-
-/* 死亡选手KD显示 */
-.player-card.dead .kd-value {
-  color: #7c7c7c;
-  font-weight: bold;
-}
-
-/* 死亡选手隐藏不需要的元素 */
-.player-card.dead .player-weapon,
-.player-card.dead .weapon-in-health,
-.player-card.dead .health-value {
-  display: none !important;
-}
-
-/* 左边卡片对齐样式 */
-.left-card {
-  text-align: left;
-}
-
-/* 右边卡片对齐样式 */
-.ct-card {
-  text-align: right;
-}
-
-/* 为死亡卡片添加特殊的透明度效果 */
-.player-card.dead .player-header {
-  opacity: 0.8;
-}
-
-/* 优化左右卡片的对齐和布局 */
-.t_player-cards {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.ct_player-cards {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-/* 右边卡片内元素位置左右互换 */
-.ct-card .player-header {
-  flex-direction: row-reverse;
-}
-
-.ct-card .kd-display {
-  margin-right: 0;
-  margin-left: 5px;
-}
-
-/*血条样式 */
-.player-health {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 6px;
-  height: 33%;
-  z-index: 20; /* 增加z-index确保血条在player-card的最上层 */
-  background-color: rgba(0, 0, 0, 1);
-}
-.player-eco {
-  display: block;
-  font-size: 15px;
-  font-weight: bold;
-  color: #1fcf45;
-}
-
-.weapon-in-health {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 15px;
-  color: #fff;
-  position: relative;
-  z-index: 10;
-}
-
-.weapon-in-health .weapon-icon {
-  width: 24px;
-  height: 24px;
-}
-
-/* 右边卡片武器信息和血量值位置调整 - 对存活选手保持space-between，对死亡选手特殊处理 */
-.ct-card .player-health {
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-/* 左侧卡片武器图标与武器名位置互换 */
-.left-card .weapon-in-health {
-  flex-direction: row-reverse;
-}
-
-/* 死亡选手卡片血量条中的统计数据居中显示 */
-.player-card.dead .player-health {
-  justify-content: center;
-}
-
-/* 右侧死亡卡片在血条中显示统计数据的布局调整 - 保持居中对齐 */
-.player-card.dead.ct-card .dead-stats-in-health {
-  justify-content: center;
-}
-
-/* 隐藏原有的武器区域 */
-.player-weapon {
-  display: none;
-}
-
-/* KD显示样式 */
-   .kd-display {
-      display: flex;
-      align-items: center;
-    }
-
-    .kd-icon {
-      margin-left: 4px;
-      width: 16px;
-      height: 16px;
-      vertical-align: middle;
-    }
-
-    .kd-values {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-    }
-
-    .kd-value {
-      font-size: 16.5px;
-      color: #ffffff;
-      min-width: 22.5px;
-      text-align: center;
-    }
-
-  .kd-label {
-    font-size: 11px;
-    color: #FFD700;
-    font-weight: bold;
-    display: none; /* 隐藏KD标签 */
+  .progress-fill.defuse {
+    background: #4fc3f7;
+    height: 8px;
+    top: 0;
+    z-index: 3;
   }
-
-  .player-stats {
-    display: none;
+  /* ===== 玩家卡片（死亡态修复）==== */
+  .player-card.dead .weapon-in-health { display: none; }
+  .player-card.dead .health-with-shield { display: none; }
+  .player-card.dead .dead-stats-in-health {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 12px;
+    text-align: center;
   }
-
-  .player-score {
-    display: none;
+  .player-card.dead .dead-adr, .player-card.dead .dead-kd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
-
-  .player-info {
-    display: none; /* 隐藏玩家信息区域 */
+  .t_player-cards .left-card.player-card.dead {
+    opacity: 0.85;
   }
-</style>
+  </style>

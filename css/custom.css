@@ -1,0 +1,25 @@
+/* 自定义CSS文件 - 用户可以在此添加自定义样式 */
+/* 此文件的内容会覆盖默认样式 */
+
+/* 示例：修改背景颜色 */
+/*
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+*/
+
+/* 示例：修改卡片样式 */
+/*
+.round-info-card {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #ff4500;
+}
+*/
+
+/* 示例：修改字体颜色 */
+/*
+.player-card {
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+*/
